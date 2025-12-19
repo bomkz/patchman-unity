@@ -1,5 +1,5 @@
 {
-    "assetFilePath": ".\\resources.assets",
+    "originalFilePath": ".\\resources.assets",
     "operations": [
         {
             "type": "import",
@@ -14,5 +14,5 @@
             "assetPath": "modded.assets"
         }
     ],
-    "saveFilePath": ".\\newresources.assets"
+    "modifiedFilePath": ".\\newresources.assets"
 }

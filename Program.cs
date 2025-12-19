@@ -5,26 +5,31 @@ using System.Text.RegularExpressions;
 using System.Text.Json;
 using AssetsTools.NET;
 using AssetsTools.NET.Extra;
+using System.Runtime.CompilerServices;
+using System.Data;
 
 namespace PatchmanUnity
 {
     public class Operation
     {
-        public string? type { get; set; }
-        public string? assetType { get; set; }
-        public string? assetName { get; set; }
-        public string? assetPath { get; set; }
+        public string? Type { get; set; }
+        public string? AssetType { get; set; }
+        public string? AssetName { get; set; }
+        public string? AssetPath { get; set; }
     }
 
     public class OpsFile
     {
-        public string? assetFilePath { get; set; }
-        public Operation[]? operations { get; set; }
-        public string? saveFilePath { get; set; }
+        public string? OriginalFilePath { get; set; }
+        public Operation[]? Operations { get; set; }
+        public string? ModifiedFilePath { get; set; }
     }
     class Program
     {
         static public AssetsManager manager = new();
+        static public AssetBundleFile? bun;
+        static public BundleFileInstance? bunInst;
+        static public OpsFile? ops;
         static public AssetsFileInstance? afileInst;
         static public AssetsFile? afile;
         static public bool changed = false;
@@ -45,8 +50,23 @@ namespace PatchmanUnity
 
                 case "extractbundle":
                     return RunExtractBundle(args) ? 0 : 3;
-                case "automation":
-                    return RunReadOps(args) ? 0 : 4;
+                case "batchimportassets":
+                    if (args.Length < 2)
+                    {
+                        Console.Error.WriteLine("batchimportassets <operationsFilePath>");
+                        return 4;
+                    }
+                    ops = RunReadOps(args[1]);
+                    return RunHandleOps() ? 0:4;
+
+                    case "batchimportbundle":
+                    if (args.Length < 2)
+                    {
+                        Console.Error.WriteLine("batchimportbundle <operationsFilePath>");
+                        return 5;
+                    }
+                    ops = RunReadOps(args[1]);
+                    return RunBatchImportBundle() ? 0:5;
                 case "help":
                 case "-h":
                 case "--help":
@@ -87,7 +107,7 @@ namespace PatchmanUnity
                 string decompFile = $"{file}.decomp";
 
                 if (flags.Contains("-md"))
-                    decompFile = null;
+                    decompFile = string.Empty;
 
                 if (!File.Exists(file))
                 {
@@ -171,96 +191,144 @@ namespace PatchmanUnity
 
             return bun;
         }
-        static bool RunReadOps(string[] args)
+
+        static bool RunBatchImportBundle()
         {
-            if (args.Length < 2)
-            {
-                Console.Error.WriteLine("automation <operationsFilePath>");
-                return false;
+            manager = new AssetsManager();
+
+            var fileIndex = 0;
+            bunInst = manager.LoadBundleFile(ops?.OriginalFilePath ?? throw new ArgumentNullException("ops.OriginalFilePath"), true);
+            bun = bunInst.file;
+            afileInst = manager.LoadAssetsFileFromBundle(bunInst, fileIndex, false);
+            afile = afileInst.file;
+
+
+            HandleImportBatch(ops);
+
+            if (changed) {
+                bun.BlockAndDirInfo.DirectoryInfos[fileIndex].SetNewData(afile);
+                using (AssetsFileWriter writer = new AssetsFileWriter(ops.ModifiedFilePath + ".uncompressed"))
+                {
+                    bun.Write(writer);
+                }
             }
-            if (!File.Exists(args[1]))
+            
+            if (string.IsNullOrEmpty(ops?.ModifiedFilePath))
             {
-                return false;
+                throw new ArgumentNullException("ops.ModifiedFilePath", "The save file path cannot be null or empty.");
+            }
+
+            CompressBundle(ops.ModifiedFilePath);
+            return true;
+        }
+
+        static bool CompressBundle(string filePath)
+        {
+            var uncompressedName = filePath + ".uncompressed";
+
+            var newUncompressedBundle = new AssetBundleFile();
+            newUncompressedBundle.Read(new AssetsFileReader(File.OpenRead(uncompressedName)));
+
+            using (AssetsFileWriter writer = new AssetsFileWriter(filePath))
+            {
+                newUncompressedBundle.Pack(writer, AssetBundleCompressionType.LZ4);
+            }
+
+            newUncompressedBundle.Close();
+
+            return true;
+        }
+
+
+        static OpsFile RunReadOps(string filepath)
+        {
+
+            if (!File.Exists(filepath))
+            {
+                return new OpsFile();
             }
             OpsFile? ops;
             try
             {
-                var json = File.ReadAllText(args[1]);
+                var json = File.ReadAllText(filepath);
                 var opts = new JsonSerializerOptions{ PropertyNameCaseInsensitive = true };
                 ops = JsonSerializer.Deserialize<OpsFile>(json, opts);
                 if (ops == null)
                 {
-                    return false;
+                    return new OpsFile();
+
                 }
             }
             catch (Exception ex)
             {
                 Console.Error.WriteLine($"Failed to read ops file: {ex.Message}");
-                return false;
+                return new OpsFile();
+
             }
 
-            if (ops == null || string.IsNullOrEmpty(ops.assetFilePath) || ops.operations == null)
+            if (ops == null || string.IsNullOrEmpty(ops.OriginalFilePath) || ops.Operations == null)
             {
                 Console.Error.WriteLine("Invalid ops file contents.");
-                return false;
+                return new OpsFile();
+
             }
-            RunHandleOps(ops);
-            return true;
+            return ops;
         }
 
-        static bool RunHandleOps(OpsFile ops)
+        static bool RunHandleOps()
         {
             
             manager.LoadClassPackage("classdata.tpk");
-            afileInst = manager.LoadAssetsFile(ops.assetFilePath, true);
+            afileInst = manager.LoadAssetsFile(ops?.OriginalFilePath ?? throw new ArgumentNullException("ops.OriginalFilePath"), true);
             afile = afileInst.file;
             manager.LoadClassDatabaseFromPackage(afile.Metadata.UnityVersion);
 
-            RunImportAssetBatch(ops);
+            HandleImportBatch(ops);
 
             if (changed)
             {
-                using AssetsFileWriter writer = new(ops.saveFilePath);
+                using AssetsFileWriter writer = new(ops.ModifiedFilePath);
                 afile.Write(writer);                        
             }
             return true;
         }
 
-        static bool RunImportAssetBatch(OpsFile ops)
+        static bool HandleImportBatch(OpsFile ops)
         {
             if (afile == null) return false;
             
-            foreach (var operation in ops.operations ?? [])
+            foreach (var operation in ops.Operations ?? [])
             {
-                if (operation.type == "import")
+                if (operation.Type == "import")
                 {
-                    if (operation.assetType == "Texture2D")
+                    if (operation.AssetType == "Texture2D")
                     {
                         foreach (var goInfo in afile.GetAssetsOfType(AssetClassID.Texture2D))
                         {
                             var goBase = manager.GetBaseField(afileInst, goInfo);
                             var name = goBase["m_Name"].AsString;
 
-                            if (name == operation.assetName)
+                            if (name == operation.AssetName)
                             {
                                 var sResource = goBase["m_Resource"];
-                                sResource["m_Source"].AsString = operation.assetPath;
+                                sResource["m_Source"].AsString = operation.AssetPath;
                                 goInfo.SetNewData(goBase);
 
                                 changed = true;
+                                break;
                             }                       
                         }
-                    } else if (operation.assetType == "AudioClip")
+                    } else if (operation.AssetType == "AudioClip")
                     {
                         foreach (var goInfo in afile.GetAssetsOfType(AssetClassID.AudioClip))
                         {
                             var goBase = manager.GetBaseField(afileInst, goInfo);
                             var name = goBase["m_Name"].AsString;
 
-                            if (name == operation.assetName)
+                            if (name == operation.AssetName)
                             {
                                 var sResource = goBase["m_Resource"];
-                                sResource["m_Source"].AsString = operation.assetPath;
+                                sResource["m_Source"].AsString = operation.AssetPath;
                                 goInfo.SetNewData(goBase);
 
                                 changed = true;
@@ -277,7 +345,7 @@ namespace PatchmanUnity
         {
             if (args.Length < 5)
             {
-                Console.Error.WriteLine("importasset <assetfilepath> <assetType> <assetName> <moddedAssetFileName> <savePath>");
+                Console.Error.WriteLine("importasset <OriginalFilePath> <AssetType> <assetName> <moddedAssetFileName> <savePath>");
                 return false;
             }
 
@@ -401,3 +469,4 @@ namespace PatchmanUnity
         BundleFile
     }
 }
+

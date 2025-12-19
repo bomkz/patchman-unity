@@ -7,9 +7,9 @@
             "request": "launch",
             "program": "${workspaceFolder}/bin/Debug/net10.0/patchman-unity.exe",
             "args": [
-                "extractbundle",
-                ".\\bundle",
-                ".\\bundlePath"
+                "batchimportbundle",
+                ".\\ops2.json",
+                ""
             ],
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
