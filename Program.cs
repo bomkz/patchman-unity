@@ -167,7 +167,7 @@ namespace PatchmanUnity
 
             using (AssetsFileWriter writer = new AssetsFileWriter(filePath))
             {
-                newUncompressedBundle.Pack(writer, AssetBundleCompressionType.LZ4);
+                newUncompressedBundle.Pack(writer, AssetBundleCompressionType.LZMA);
             }
 
             newUncompressedBundle.Close();
