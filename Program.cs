@@ -47,9 +47,7 @@ namespace PatchmanUnity
             {
                 case "importasset":
                     return RunImportAsset(args) ? 0 : 2;
-
-                case "extractbundle":
-                    return RunExtractBundle(args) ? 0 : 3;
+                    
                 case "batchimportassets":
                     if (args.Length < 2)
                     {
@@ -84,69 +82,6 @@ namespace PatchmanUnity
             Console.WriteLine("Usage:");
             Console.WriteLine("  patcher.exe exportfrombundle <bundlePath> <outputDir>");
             Console.WriteLine("  patcher.exe importintobundle --bundlePath=\"exampleBundlePath\" --assetName=\"exampleAssetName\" --exportPath=\"exampleExportPath\" --importPath=\"exampleImportPath\"");
-        }
-
-        static bool RunExtractBundle(string[] args)
-        {
-            if (args.Length < 3)
-            {
-                Console.Error.WriteLine("extractbundle <bundlepath> <extractpath>");
-                return false;
-            }
-
-            if (!Directory.Exists(args[2]))
-            {
-                Console.WriteLine("Directory does not exist!");
-                return false;
-            }
-
-            HashSet<string> flags = GetFlags(args);
-
-            foreach (string file in Directory.EnumerateFiles(args[2]))
-            {
-                string decompFile = $"{file}.decomp";
-
-                if (flags.Contains("-md"))
-                    decompFile = string.Empty;
-
-                if (!File.Exists(file))
-                {
-                    Console.WriteLine($"File {file} does not exist!");
-                    return false;
-                }
-
-                DetectedFileType fileType = FileTypeDetector.DetectFileType(file);
-                if (fileType != DetectedFileType.BundleFile)
-                {
-                    continue;
-                }
-
-                Console.WriteLine($"Decompressing {file}...");
-                AssetBundleFile bun = DecompressBundle(file, decompFile);
-
-                int entryCount = bun.BlockAndDirInfo.DirectoryInfos.Count;
-                for (int i = 0; i < entryCount; i++)
-                {
-                    string name = bun.BlockAndDirInfo.DirectoryInfos[i].Name;
-                    byte[] data = BundleHelper.LoadAssetDataFromBundle(bun, i);
-                    string outName;
-                    if (flags.Contains("-keepnames"))
-                        outName = Path.Combine(args[2], name);
-                    else
-                        outName = Path.Combine(args[2], $"{Path.GetFileName(file)}_{name}");
-                    Console.WriteLine($"Exporting {outName}...");
-                    File.WriteAllBytes(outName, data);
-                }
-
-                bun.Close();
-
-                if (!flags.Contains("-kd") && !flags.Contains("-md") && File.Exists(decompFile))
-                    File.Delete(decompFile);
-
-                Console.WriteLine("Done.");
-            }
-
-            return true;
         }
 
         static HashSet<string> GetFlags(string[] args)
