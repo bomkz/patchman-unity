@@ -154,6 +154,7 @@ namespace PatchmanUnity
             }
 
             CompressBundle(ops.ModifiedFilePath);
+            File.Delete(ops.ModifiedFilePath+".uncompressed");
             return true;
         }
 
