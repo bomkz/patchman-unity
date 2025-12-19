@@ -55,6 +55,7 @@ namespace PatchmanUnity
                         return 4;
                     }
                     ops = ReadOps(args[1]);
+
                     return HandleBatchImportAssets() ? 0:4;
 
                     case "batchimportbundle":
@@ -66,6 +67,7 @@ namespace PatchmanUnity
 
                     ops = ReadOps(args[1]);
                     return HandleBatchImportBundle() ? 0:5;
+                        
                 case "help":
                 case "-h":
                 case "--help":
