@@ -2,17 +2,12 @@
     "assetFilePath": ".\\resources.assets",
     "operations": [
         {
-            "type": "import",
+            "type": "extract",
             "assetType": "AudioClip",
             "assetName": "ttsw_autopilotOff",
-            "assetPath": "modded.assets"
-        },
-        {
-            "type": "import",
-            "assetType": "AudioClip",
-            "assetName": "ttsw_pullUp",
             "assetPath": "modded.assets"
         }
     ],
     "saveFilePath": ".\\newresources.assets"
+
 }
