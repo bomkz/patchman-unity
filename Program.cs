@@ -54,8 +54,8 @@ namespace PatchmanUnity
                         Console.Error.WriteLine("batchimportassets <operationsFilePath>");
                         return 4;
                     }
-                    ops = RunReadOps(args[1]);
-                    return RunHandleOps() ? 0:4;
+                    ops = ReadOps(args[1]);
+                    return HandleBatchImportAssets() ? 0:4;
 
                     case "batchimportbundle":
                     if (args.Length < 2)
@@ -63,8 +63,9 @@ namespace PatchmanUnity
                         Console.Error.WriteLine("batchimportbundle <operationsFilePath>");
                         return 5;
                     }
-                    ops = RunReadOps(args[1]);
-                    return RunBatchImportBundle() ? 0:5;
+
+                    ops = ReadOps(args[1]);
+                    return HandleBatchImportBundle() ? 0:5;
                 case "help":
                 case "-h":
                 case "--help":
@@ -127,7 +128,7 @@ namespace PatchmanUnity
             return bun;
         }
 
-        static bool RunBatchImportBundle()
+        static bool HandleBatchImportBundle()
         {
             manager = new AssetsManager();
 
@@ -155,6 +156,7 @@ namespace PatchmanUnity
 
             CompressBundle(ops.ModifiedFilePath);
             File.Delete(ops.ModifiedFilePath+".uncompressed");
+            Console.Write("Done!");
             return true;
         }
 
@@ -176,7 +178,7 @@ namespace PatchmanUnity
         }
 
 
-        static OpsFile RunReadOps(string filepath)
+        static OpsFile ReadOps(string filepath)
         {
 
             if (!File.Exists(filepath))
@@ -211,7 +213,7 @@ namespace PatchmanUnity
             return ops;
         }
 
-        static bool RunHandleOps()
+        static bool HandleBatchImportAssets()
         {
             
             manager.LoadClassPackage("classdata.tpk");
@@ -226,6 +228,8 @@ namespace PatchmanUnity
                 using AssetsFileWriter writer = new(ops.ModifiedFilePath);
                 afile.Write(writer);                        
             }
+
+            Console.Write("Done!");
             return true;
         }
 
