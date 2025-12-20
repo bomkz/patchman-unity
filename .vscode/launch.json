@@ -7,7 +7,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/bin/Debug/net10.0/win-x64/patchman-unity.exe",
             "args": [
-                "batchimportbundle",
+                "batchimportasset",
                 ".\\operations.json",
                 ""
             ],

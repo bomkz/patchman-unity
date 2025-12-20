@@ -7,6 +7,7 @@ using AssetsTools.NET;
 using AssetsTools.NET.Extra;
 using System.Runtime.CompilerServices;
 using System.Data;
+using System.Runtime.InteropServices;
 
 namespace PatchmanUnity
 {
@@ -16,6 +17,8 @@ namespace PatchmanUnity
         public string? AssetType { get; set; }
         public string? AssetName { get; set; }
         public string? AssetPath { get; set; }
+        public Int64 Offset { get; set; }
+        public Int64 Size { get; set; }
     }
 
     public class OpsFile
@@ -32,6 +35,7 @@ namespace PatchmanUnity
         static public OpsFile? ops;
         static public AssetsFileInstance? afileInst;
         static public AssetsFile? afile;
+        static public string? compression;
         static public bool changed = false;
         static int Main(string[] args)
         {
@@ -48,7 +52,7 @@ namespace PatchmanUnity
                 case "importasset":
                     return RunImportAsset(args) ? 0 : 2;
                     
-                case "batchimportassets":
+                case "batchimportasset":
                     if (args.Length < 2)
                     {
                         Console.Error.WriteLine("batchimportassets <operationsFilePath>");
@@ -59,12 +63,12 @@ namespace PatchmanUnity
                     return HandleBatchImportAssets() ? 0:4;
 
                 case "batchimportbundle":
-                    if (args.Length < 2)
+                    if (args.Length < 3)
                     {
-                        Console.Error.WriteLine("batchimportbundle <operationsFilePath>");
+                        Console.Error.WriteLine("batchimportbundle <operationsFilePath> <compressiontype:lzma/lz4/lz4fast/none>");
                         return 5;
                     }
-
+                    compression = args[2].ToLowerInvariant();
                     ops = ReadOps(args[1]);
                     return HandleBatchImportBundle() ? 0:5;
                         
@@ -140,6 +144,15 @@ namespace PatchmanUnity
             afileInst = manager.LoadAssetsFileFromBundle(bunInst, fileIndex, false);
             afile = afileInst.file;
 
+            if (File.Exists(ops.ModifiedFilePath))
+            {
+                File.Delete(ops.ModifiedFilePath);
+            }
+
+            if (File.Exists(ops.ModifiedFilePath+".uncompressed"))
+            {
+                File.Delete(ops.ModifiedFilePath+".uncompressed");
+            }
 
             HandleImportBatch(ops);
 
@@ -164,17 +177,52 @@ namespace PatchmanUnity
 
         static bool CompressBundle(string filePath)
         {
-            var uncompressedName = filePath + ".uncompressed";
-
-            var newUncompressedBundle = new AssetBundleFile();
-            newUncompressedBundle.Read(new AssetsFileReader(File.OpenRead(uncompressedName)));
-
-            using (AssetsFileWriter writer = new AssetsFileWriter(filePath))
+            if (compression == "lzma")
             {
-                newUncompressedBundle.Pack(writer, AssetBundleCompressionType.LZMA);
-            }
+                var uncompressedName = filePath + ".uncompressed";
 
-            newUncompressedBundle.Close();
+                var newUncompressedBundle = new AssetBundleFile();
+                newUncompressedBundle.Read(new AssetsFileReader(File.OpenRead(uncompressedName)));
+
+                using (AssetsFileWriter writer = new AssetsFileWriter(filePath))
+                {
+                    newUncompressedBundle.Pack(writer, AssetBundleCompressionType.LZMA);
+                }
+
+                newUncompressedBundle.Close();
+            } else if (compression == "lz4")
+            {
+                var uncompressedName = filePath + ".uncompressed";
+
+                var newUncompressedBundle = new AssetBundleFile();
+                newUncompressedBundle.Read(new AssetsFileReader(File.OpenRead(uncompressedName)));
+
+                using (AssetsFileWriter writer = new AssetsFileWriter(filePath))
+                {
+                    newUncompressedBundle.Pack(writer, AssetBundleCompressionType.LZ4);
+                }
+
+                newUncompressedBundle.Close();
+            } else if (compression == "lz4fast")
+            {
+                var uncompressedName = filePath + ".uncompressed";
+
+                var newUncompressedBundle = new AssetBundleFile();
+                newUncompressedBundle.Read(new AssetsFileReader(File.OpenRead(uncompressedName)));
+
+                using (AssetsFileWriter writer = new AssetsFileWriter(filePath))
+                {
+                    newUncompressedBundle.Pack(writer, AssetBundleCompressionType.LZ4Fast);
+                }
+
+                newUncompressedBundle.Close();
+            } else if (compression == "none")
+            {
+                File.Move(filePath + ".uncompressed", filePath);
+            } else {
+                Console.Error.WriteLine($"Unknown compression type: {compression}");
+                return false;
+            }
 
             return true;
         }
@@ -254,6 +302,8 @@ namespace PatchmanUnity
                             {
                                 var sResource = goBase["m_StreamData"];
                                 sResource["path"].AsString = operation.AssetPath;
+                                sResource["offset"].AsLong = operation.Offset;
+                                sResource["size"].AsLong = operation.Size;
                                 goInfo.SetNewData(goBase);
 
                                 changed = true;
@@ -271,6 +321,8 @@ namespace PatchmanUnity
                             {
                                 var sResource = goBase["m_Resource"];
                                 sResource["m_Source"].AsString = operation.AssetPath;
+                                sResource["m_Offset"].AsLong = operation.Offset;
+                                sResource["m_Size"].AsLong = operation.Size;
                                 goInfo.SetNewData(goBase);
 
                                 changed = true;
