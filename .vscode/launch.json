@@ -8,7 +8,7 @@
             "program": "${workspaceFolder}/bin/Debug/net10.0/win-x64/patchman-unity.exe",
             "args": [
                 "batchimportbundle",
-                ".\\ops2.json",
+                ".\\operations.json",
                 ""
             ],
             "cwd": "${workspaceFolder}",

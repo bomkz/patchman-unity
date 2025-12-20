@@ -58,7 +58,7 @@ namespace PatchmanUnity
 
                     return HandleBatchImportAssets() ? 0:4;
 
-                    case "batchimportbundle":
+                case "batchimportbundle":
                     if (args.Length < 2)
                     {
                         Console.Error.WriteLine("batchimportbundle <operationsFilePath>");
@@ -252,8 +252,8 @@ namespace PatchmanUnity
 
                             if (name == operation.AssetName)
                             {
-                                var sResource = goBase["m_Resource"];
-                                sResource["m_Source"].AsString = operation.AssetPath;
+                                var sResource = goBase["m_StreamData"];
+                                sResource["path"].AsString = operation.AssetPath;
                                 goInfo.SetNewData(goBase);
 
                                 changed = true;
