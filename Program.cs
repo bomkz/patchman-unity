@@ -308,9 +308,9 @@ namespace PatchmanUnity
                                 sResource["m_Source"].AsString = operation.AssetPath;
                                 sResource["m_Offset"].AsLong = operation.Offset;
                                 sResource["m_Size"].AsLong = operation.Size;
-                                if (operation.Length.HasValue)
+                                if (operation.Length == 0)
                                 {
-                                    goBase["m_Length"].AsFloat = operation.Length.Value;
+                                    goBase["m_Length"].AsFloat = (float)operation.Length;
                                 }
                                 goInfo.SetNewData(goBase);
 
