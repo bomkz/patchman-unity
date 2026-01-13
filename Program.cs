@@ -17,6 +17,7 @@ namespace PatchmanUnity
         public string? AssetType { get; set; }
         public string? AssetName { get; set; }
         public string? AssetPath { get; set; }
+        public float? Length { get; set; }
         public Int64 Offset { get; set; }
         public Int64 Size { get; set; }
     }
@@ -42,15 +43,12 @@ namespace PatchmanUnity
 
             if (args == null || args.Length == 0)
             {
-                PrintUsage();
                 return 1;
             }
             
 
             switch (args[0].ToLowerInvariant())
             {
-                case "importasset":
-                    return RunImportAsset(args) ? 0 : 2;
                     
                 case "batchimportasset":
                     if (args.Length < 2)
@@ -71,24 +69,11 @@ namespace PatchmanUnity
                     compression = args[2].ToLowerInvariant();
                     ops = ReadOps(args[1]);
                     return HandleBatchImportBundle() ? 0:5;
-                        
-                case "help":
-                case "-h":
-                case "--help":
-                    PrintUsage();
-                    return 0;
+                    
                 default:
                     Console.Error.WriteLine($"Unknown command: {args[0]}");
-                    PrintUsage();
                     return 1;
             }
-        }
-
-        static void PrintUsage()
-        {
-            Console.WriteLine("Usage:");
-            Console.WriteLine("  patcher.exe exportfrombundle <bundlePath> <outputDir>");
-            Console.WriteLine("  patcher.exe importintobundle --bundlePath=\"exampleBundlePath\" --assetName=\"exampleAssetName\" --exportPath=\"exampleExportPath\" --importPath=\"exampleImportPath\"");
         }
 
         static HashSet<string> GetFlags(string[] args)
@@ -323,6 +308,10 @@ namespace PatchmanUnity
                                 sResource["m_Source"].AsString = operation.AssetPath;
                                 sResource["m_Offset"].AsLong = operation.Offset;
                                 sResource["m_Size"].AsLong = operation.Size;
+                                if (operation.Length.HasValue)
+                                {
+                                    goBase["m_Length"].AsFloat = operation.Length.Value;
+                                }
                                 goInfo.SetNewData(goBase);
 
                                 changed = true;
@@ -333,69 +322,7 @@ namespace PatchmanUnity
                 } 
             }
             return true;
-        }
-
-        static bool RunImportAsset(string[] args)
-        {
-            if (args.Length < 5)
-            {
-                Console.Error.WriteLine("importasset <OriginalFilePath> <AssetType> <assetName> <moddedAssetFileName> <savePath>");
-                return false;
-            }
-
-            manager.LoadClassPackage("classdata.tpk");
-            afileInst = manager.LoadAssetsFile(args[1], true);
-            afile = afileInst.file;
-            manager.LoadClassDatabaseFromPackage(afile.Metadata.UnityVersion);
-
-            if (args[2] == "AudioClip") {
-                foreach (var goInfo in afile.GetAssetsOfType(AssetClassID.AudioClip))
-                {
-                    var goBase = manager.GetBaseField(afileInst, goInfo);
-                    var name = goBase["m_Name"].AsString;
-                    if (name == args[3])
-                    {
-                        var sResource = goBase["m_Resource"];
-
-                        sResource["m_Source"].AsString = args[4];
-
-                        goInfo.SetNewData(goBase);
-                        changed = true;
-
-                    }
-
-                    if (changed) 
-                    {
-                        using AssetsFileWriter writer = new(args[5]);
-                        afile.Write(writer);
-                        
-                    }
-                }
-            } else if (args[2] == "Texture2D") {
-                foreach (var goInfo in afile.GetAssetsOfType(AssetClassID.Texture2D))
-                {
-                    var goBase = manager.GetBaseField(afileInst, goInfo);
-                    var name = goBase["m_Name"].AsString;
-                    if (name == args[3])
-                    {
-                        goBase["m_Source"].AsString = args[4]; 
-                        goInfo.SetNewData(goBase);
-
-                        changed = true;
-                    }
-
-                    
-                    if (changed) 
-                    {
-                        using AssetsFileWriter writer = new(args[5]);
-                        afile.Write(writer);                        
-                    }
-                }
-            }
-            return true;
-        }
-
-        
+        }   
     }
 }
 

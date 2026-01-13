@@ -1,1 +1,1 @@
-dotnet publish -r win-x64 -p:PublishSingleFile=true -p:SelfContained=true -c Release
+dotnet publish -r win-x64 -p:PublishSingleFile=true -p:SelfContained=true,PublishTrimmed=true,TrimmerRemoveSymbols=true,DebuggerSupport=true,Http3Support=false,HttpActivityPropagationSupport=false,StackTraceSupport=false,MetricsSupport=false,MetadataUpdaterSupport=false,InvariantGlobalization=true,UseNativeHttpHandler=true,UseSizeOptimizedLinq=true,UseSystemResourceKeys=true,XmlResolverIsNetworkingEnabledByDefault=false -c Release
