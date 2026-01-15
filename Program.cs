@@ -17,7 +17,9 @@ namespace PatchmanUnity
         public string? AssetType { get; set; }
         public string? AssetName { get; set; }
         public string? AssetPath { get; set; }
-        public float? Length { get; set; }
+        public int Height { get; set; }
+        public int Width { get; set; }
+        public float Length { get; set; }
         public Int64 Offset { get; set; }
         public Int64 Size { get; set; }
     }
@@ -289,8 +291,17 @@ namespace PatchmanUnity
                                 sResource["path"].AsString = operation.AssetPath;
                                 sResource["offset"].AsLong = operation.Offset;
                                 sResource["size"].AsLong = operation.Size;
-                                goInfo.SetNewData(goBase);
+                                goBase["m_CompleteImageSize"].AsLong = operation.Size;
+                                if (operation.Width != 0)
+                                {
+                                    goBase["m_Width"].AsInt = operation.Width;
+                                }
+                                if (operation.Height != 0)
+                                {
+                                    goBase["m_Height"].AsInt = operation.Height;
+                                }
 
+                                goInfo.SetNewData(goBase);
                                 changed = true;
                                 break;
                             }                       
@@ -308,12 +319,12 @@ namespace PatchmanUnity
                                 sResource["m_Source"].AsString = operation.AssetPath;
                                 sResource["m_Offset"].AsLong = operation.Offset;
                                 sResource["m_Size"].AsLong = operation.Size;
-                                if (operation.Length == 0)
+                                if (operation.Length != 0)
                                 {
                                     goBase["m_Length"].AsFloat = (float)operation.Length;
                                 }
+                                
                                 goInfo.SetNewData(goBase);
-
                                 changed = true;
                                 break;
                             }                       

@@ -1,0 +1,100 @@
+{
+    "patchScriptVersion":1,
+    "data": [
+        {
+            "action": "importasset",
+            "actionData": {
+                "originalFilePath": "VTOLVR_Data\\resources.assets",
+                "operations": [
+                    {
+                        "type":      "import",
+                        "assetType": "Texture2D",
+                        "assetName": "tex_miniMFD",
+                        "assetPath": "mike.assets.resS",
+                        "offset":    0,
+                        "size":      11184824,
+                        "height":    4096,
+                        "width":     4096
+                    },
+                    {
+                        "type":      "import",
+                        "assetType": "Texture2D",
+                        "assetName": "tex_interiorProps",
+                        "assetPath": "mike.assets.resS",
+                        "offset":    11184832,
+                        "size":      11184824,
+                        "height":    4096,
+                        "width":     4096
+                    },
+                    {
+                        "type":      "import",
+                        "assetType": "Texture2D",
+                        "assetName": "tex_aFighter2Int",
+                        "assetPath": "mike.assets.resS",
+                        "offset":    22369664,
+                        "size":      11184824,
+                        "height":    4096,
+                        "width":     4096
+                    },
+                    {
+                        "type":      "import",
+                        "assetType": "Texture2D",
+                        "assetName": "tex_aFighter2Ext2",
+                        "assetPath": "mike.assets.resS",
+                        "offset":    33554496,
+                        "size":      11184824,
+                        "height":    4096,
+                        "width":     4096
+                    },
+                    {
+                        "type":      "import",
+                        "assetType": "Texture2D",
+                        "assetName": "tex_mfd",
+                        "assetPath": "mike.assets.resS",
+                        "offset":    44739328,
+                        "size":      11184824,
+                        "height":    4096,
+                        "width":     4096
+                    },
+                    {
+                        "type":      "import",
+                        "assetType": "Texture2D",
+                        "assetName": "tex_acesSeat",
+                        "assetPath": "mike.assets.resS",
+                        "offset":    55924160,
+                        "size":      11184824,
+                        "height":    4096,
+                        "width":     4096
+                    },
+                    {
+                        "type":      "import",
+                        "assetType": "Texture2D",
+                        "assetName": "tex_vtol4_int",
+                        "assetPath": "mike.assets.resS",
+                        "offset":    67108992,
+                        "size":      11184824,
+                        "height":    4096,
+                        "width":     4096
+                    },
+                    {
+                        "type":      "import",
+                        "assetType": "Texture2D",
+                        "assetName": "tex_aFighter2Int2",
+                        "assetPath": "mike.assets.resS",
+                        "offset":    78293824,
+                        "size":      11184824,
+                        "height":    4096,
+                        "width":     4096
+                    }
+                ]
+            }
+        },
+        {
+            "action": "copy",
+            "actionData": {
+                "fileName": "mike.assets.resS",
+                "destination": "VTOLVR_Data\\mike.assets.resS"
+            }
+        }
+    ]
+}
