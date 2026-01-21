@@ -40,6 +40,8 @@ namespace PatchmanUnity
         static public AssetsFile? afile;
         static public string? compression;
         static public bool changed = false;
+
+        static public string defaultClassDataLocation ="classdata.tpk";
         static int Main(string[] args)
         {
 
@@ -58,7 +60,12 @@ namespace PatchmanUnity
                         Console.Error.WriteLine("batchimportassets <operationsFilePath>");
                         return 4;
                     }
+                    if (args.Length == 3)
+                    {
+                        defaultClassDataLocation = args[2];
+                    }
                     ops = ReadOps(args[1]);
+
 
                     return HandleBatchImportAssets() ? 0:4;
 
@@ -67,6 +74,10 @@ namespace PatchmanUnity
                     {
                         Console.Error.WriteLine("batchimportbundle <operationsFilePath> <compressiontype:lzma/lz4/lz4fast/none>");
                         return 5;
+                    }
+                    if (args.Length == 4)
+                    {
+                        defaultClassDataLocation = args[3];
                     }
                     compression = args[2].ToLowerInvariant();
                     ops = ReadOps(args[1]);
@@ -253,7 +264,7 @@ namespace PatchmanUnity
         static bool HandleBatchImportAssets()
         {
             
-            manager.LoadClassPackage("classdata.tpk");
+            manager.LoadClassPackage(defaultClassDataLocation);
             afileInst = manager.LoadAssetsFile(ops?.OriginalFilePath ?? throw new ArgumentNullException("ops.OriginalFilePath"), true);
             afile = afileInst.file;
             manager.LoadClassDatabaseFromPackage(afile.Metadata.UnityVersion);
